@@ -30,3 +30,7 @@ data/**.log
 .env
 
 logs
+
+# Database temp files
+*.db-shm
+*.db-wal
