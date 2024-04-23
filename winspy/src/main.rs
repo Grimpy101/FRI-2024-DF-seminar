@@ -34,6 +34,7 @@ async fn main() -> Result<()> {
     }
 
     let database = EventDatabase::events_from_file(&cmd_arguments.database_path).await?;
+    database.print_detected_events();
 
     //println!("{:?}", database);
 

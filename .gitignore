@@ -1,0 +1,3 @@
+# Database temp files
+*.db-shm
+*.db-wal
