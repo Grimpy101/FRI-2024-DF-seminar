@@ -2,6 +2,7 @@ use miette::{IntoDiagnostic, Result};
 use sqlx::sqlite::SqliteRow;
 use sqlx::Row;
 
+#[derive(Debug)]
 pub struct Tag {
     id: Option<i64>,
     name: Option<String>,

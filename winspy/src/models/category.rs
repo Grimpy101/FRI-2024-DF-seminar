@@ -3,6 +3,7 @@ use sqlx::{sqlite::SqliteRow, SqliteConnection};
 
 use miette::{IntoDiagnostic, Result};
 
+#[derive(Debug)]
 pub struct Category {
     id: Option<i64>,
     name: Option<String>,

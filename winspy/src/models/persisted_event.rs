@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use chrono::{DateTime, TimeDelta, TimeZone, Utc};
 use miette::{IntoDiagnostic, Result};
 use serde_json::Value;
@@ -54,6 +56,21 @@ pub struct PersistedEvent {
 
     categories: Vec<Category>,
     tags: Vec<Tag>,
+}
+
+impl Debug for PersistedEvent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let time = self.time.map_or("/".to_string(), |t| t.to_string());
+        let device_id = self.device_id.clone().map_or("/".to_string(), |d| d);
+        let event_name = self.event_name.clone().map_or("/".to_string(), |e| e);
+        let logging_binary = self.logging_binary.clone().map_or("/".to_string(), |l| l);
+
+        write!(
+            f,
+            "[{}] {} (device ID: {}, logging binary: {})",
+            time, event_name, device_id, logging_binary
+        )
+    }
 }
 
 impl PersistedEvent {
