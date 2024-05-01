@@ -2,7 +2,6 @@ use std::path::Path;
 
 use argh::FromArgs;
 use miette::{miette, Result};
-use models::EventDatabase;
 
 mod models;
 
@@ -33,8 +32,8 @@ async fn main() -> Result<()> {
         ));
     }
 
-    let database = EventDatabase::events_from_file(&cmd_arguments.database_path).await?;
-    database.print_detected_events();
+    //let database = EventDatabase::events_from_file(&cmd_arguments.database_path).await?;
+    //database.print_detected_events();
 
     //println!("{:?}", database);
 
