@@ -1,7 +1,7 @@
-use sqlx::sqlite::SqliteRow;
 use sqlx::Row;
+use sqlx::{sqlite::SqliteRow, SqliteConnection};
 
-use miette::Result;
+use miette::{IntoDiagnostic, Result};
 
 pub struct Category {
     id: Option<i64>,
@@ -14,9 +14,13 @@ impl Category {
         Self { id, name, producer }
     }
 
-    /*pub fn from_sql_row(row: SqliteRow) -> Result<Self> {
-        let id = row.try_get("category_id")
-    }*/
+    pub fn from_sql_row(row: SqliteRow) -> Result<Self> {
+        let id: Option<i64> = row.try_get("category_id").into_diagnostic()?;
+        let name: Option<String> = row.try_get("category_id_text").into_diagnostic()?;
+        let producer: Option<String> = row.try_get("producer_id_name").into_diagnostic()?;
+
+        Ok(Self { id, name, producer })
+    }
 
     pub fn id(&self) -> Option<i64> {
         self.id

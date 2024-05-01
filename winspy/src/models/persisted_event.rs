@@ -1,5 +1,8 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeDelta, TimeZone, Utc};
+use miette::{IntoDiagnostic, Result};
 use serde_json::Value;
+use sqlx::sqlite::SqliteRow;
+use sqlx::Row;
 
 use super::{category::Category, tag::Tag};
 
@@ -11,6 +14,7 @@ pub struct PersistedEventDescriptor {
     pub device_id: Option<String>,
     /// Name of the event, separated by full-stops
     pub event_name: Option<String>,
+    pub event_name_hash: Option<i64>,
     /// Not sure but we parse it anyway
     pub is_core: Option<bool>,
     /// The process that logged the event
@@ -35,6 +39,7 @@ pub struct PersistedEvent {
     time: Option<DateTime<Utc>>,
     device_id: Option<String>,
     event_name: Option<String>, // `full_event_name` in the database
+    event_name_hash: Option<i64>,
     is_core: Option<bool>,
     logging_binary: Option<String>, // Binary that logged the event
     producer: Option<String>,       // Producer of the event (e.g. Windows, Edge, ...)
@@ -75,6 +80,7 @@ impl PersistedEvent {
             time: descriptor.time,
             device_id: descriptor.device_id,
             event_name: descriptor.event_name,
+            event_name_hash: descriptor.event_name_hash,
             is_core: descriptor.is_core,
             logging_binary: descriptor.logging_binary,
             producer: descriptor.producer,
@@ -87,6 +93,69 @@ impl PersistedEvent {
             categories: Vec::new(),
             tags: Vec::new(),
         }
+    }
+
+    pub fn from_sql_row(row: SqliteRow) -> Result<Self> {
+        let sid: Option<String> = row.try_get("sid").into_diagnostic()?;
+        let ldap_timestamp: Option<i64> = row.try_get("timestamp").into_diagnostic()?;
+        let payload: Option<String> = row.try_get("payload").into_diagnostic()?;
+        let event_name: Option<String> = row.try_get("full_event_name").into_diagnostic()?;
+        let event_name_hash: Option<i64> = row.try_get("full_event_name_hash").into_diagnostic()?;
+        let is_core: Option<bool> = row.try_get("is_core").into_diagnostic()?;
+        let provider_group_guid: Option<String> = row.try_get("group_guid").into_diagnostic()?;
+        let logging_binary: Option<String> = row
+            .try_get("friendly_logging_binary_name")
+            .into_diagnostic()?;
+        let producer: Option<String> = row.try_get("producer_id_name").into_diagnostic()?;
+        let extra1: Option<String> = row.try_get("extra1").into_diagnostic()?;
+        let extra2: Option<String> = row.try_get("extra2").into_diagnostic()?;
+        let extra3: Option<String> = row.try_get("extra3").into_diagnostic()?;
+
+        // Time is measured in 100-ns intervals since 1. 1. 1601
+        let mut time = None;
+        if let Some(ldap_timestamp) = ldap_timestamp {
+            if let Some(start_datetime) = Utc.with_ymd_and_hms(1601, 1, 1, 0, 0, 0).single() {
+                let time_delta = TimeDelta::seconds(ldap_timestamp / 10000000);
+                if let Some(final_time) = start_datetime.checked_add_signed(time_delta) {
+                    time = Some(final_time);
+                };
+            };
+        }
+
+        // Parse JSON payload. If not successful, set `json_payload` to None and provide
+        // `raw_payload`. Otherwise set `raw_payload` to None.
+        let json_payload: Option<Value> = if let Some(payload) = &payload {
+            if let Ok(json_result) = serde_json::from_str(payload) {
+                Some(json_result)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+        let raw_payload = if json_payload.is_some() {
+            None
+        } else {
+            payload
+        };
+
+        Ok(Self {
+            time,
+            device_id: sid,
+            event_name,
+            event_name_hash,
+            is_core,
+            logging_binary,
+            producer,
+            provider_group: provider_group_guid,
+            json_payload,
+            raw_payload,
+            extra1,
+            extra2,
+            extra3,
+            categories: Vec::new(),
+            tags: Vec::new(),
+        })
     }
 
     /// Time of the event
