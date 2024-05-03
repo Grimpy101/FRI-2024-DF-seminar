@@ -4,6 +4,7 @@ use argh::FromArgs;
 use miette::Result;
 use models::EventDatabase;
 
+mod detectors;
 mod models;
 
 #[derive(FromArgs)]
