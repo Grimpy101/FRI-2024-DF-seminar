@@ -3,8 +3,12 @@ use std::path::Path;
 use argh::FromArgs;
 use miette::Result;
 use models::EventDatabase;
+use tracing_subscriber::EnvFilter;
+
+use crate::logging::initialize_tracing;
 
 mod detectors;
+mod logging;
 mod models;
 
 #[derive(FromArgs)]
@@ -17,7 +21,15 @@ pub struct CmdArguments {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let guard = initialize_tracing(
+        EnvFilter::from_default_env(),
+        EnvFilter::from_default_env(),
+        "logs",
+        "df-winspy",
+    )?;
+
     let cmd_arguments: CmdArguments = argh::from_env();
+
 
     let database_path = Path::new(&cmd_arguments.database_path);
 
@@ -28,7 +40,11 @@ async fn main() -> Result<()> {
         println!("{:?}", event);
     }
 
-    println!("\n-------------------\nRetrieved {} events", events.len());
+    println!(
+        "\n-------------------\nRetrieved {} events",
+        events.len()
+    );
 
+    drop(guard);
     Ok(())
 }

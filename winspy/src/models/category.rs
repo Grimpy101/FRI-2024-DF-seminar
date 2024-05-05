@@ -1,7 +1,6 @@
+use miette::{IntoDiagnostic, Result};
 use sqlx::Row;
 use sqlx::{sqlite::SqliteRow, SqliteConnection};
-
-use miette::{IntoDiagnostic, Result};
 
 #[derive(Debug)]
 pub struct Category {

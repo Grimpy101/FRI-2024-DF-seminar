@@ -1,14 +1,16 @@
 use std::path::Path;
 
+use miette::Result;
 use miette::{miette, IntoDiagnostic};
 use sqlx::{Connection, SqliteConnection};
 
 use self::{
-    category::Category, error::EventsError, persisted_event::PersistedEvent, producer::Producer,
+    category::Category,
+    error::EventsError,
+    persisted_event::PersistedEvent,
+    producer::Producer,
     tag::Tag,
 };
-
-use miette::Result;
 
 pub mod category;
 pub mod error;
@@ -24,7 +26,9 @@ pub struct EventDatabase {
 impl EventDatabase {
     pub async fn new(database_path: &Path) -> Result<Self> {
         if !database_path.exists() || !database_path.is_file() {
-            return Err(miette!("Provided file does not exist or is not a file"));
+            return Err(miette!(
+                "Provided file does not exist or is not a file"
+            ));
         }
 
         let Some(path_str) = database_path.to_str() else {
