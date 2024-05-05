@@ -5,6 +5,12 @@
             "driver": "SQLite",
             "name": "test-event-transcript",
             "database": "${workspaceFolder:FRI-2024-DF-seminar}/test_data/VM/Diagnosis/EventTranscript/EventTranscript.db"
+        },
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "name": "test2-df",
+            "database": "${workspaceFolder:FRI-2024-DF-seminar}/test_data/VM2/EventTranscript.db"
         }
     ],
     "sqltools.useNodeRuntime": true,
