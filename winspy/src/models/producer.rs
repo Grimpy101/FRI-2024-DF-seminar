@@ -1,7 +1,7 @@
 use miette::{Context, IntoDiagnostic, Result};
-use sqlx::{sqlite::SqliteRow, SqliteConnection};
+use sqlx::SqliteConnection;
 
-use crate::{require_some, try_get_row};
+use crate::require_some;
 
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
@@ -29,13 +29,13 @@ impl ProducerId {
 /// # Source
 /// `producers` table in `EventTrancript.db`.
 pub struct Producer {
-    id: i64,
+    id: ProducerId,
     name: String,
 }
 
 impl Producer {
     #[inline]
-    pub fn new(id: i64, name: String) -> Self {
+    pub fn new(id: ProducerId, name: String) -> Self {
         Self { id, name }
     }
 
@@ -51,7 +51,7 @@ impl Producer {
 
         for query_result in query_results {
             let parsed_producer = Self {
-                id: query_result.producer_id,
+                id: ProducerId::new(query_result.producer_id),
                 name: require_some!(query_result.producer_id_text, "producer_id_text")?,
             };
 
@@ -61,14 +61,7 @@ impl Producer {
         Ok(parsed_producers)
     }
 
-    pub fn try_from_sqlite_row(row: &SqliteRow) -> Result<Self> {
-        let id: i64 = try_get_row!(row, "producer_id")?;
-        let name: String = try_get_row!(row, "producer_id_text")?;
-
-        Ok(Self { id, name })
-    }
-
-    pub fn id(&self) -> i64 {
+    pub fn id(&self) -> ProducerId {
         self.id
     }
 

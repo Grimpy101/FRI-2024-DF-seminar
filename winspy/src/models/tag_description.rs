@@ -1,13 +1,18 @@
 use miette::{Context, IntoDiagnostic, Result};
 use serde::{Deserialize, Serialize};
-use sqlx::{query, sqlite::SqliteRow, SqliteConnection};
+use sqlx::{query, SqliteConnection};
 
-use crate::{require_some, try_get_row};
+use crate::require_some;
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, Serialize, Deserialize)]
 pub struct TagDescriptionId(i64);
 
 impl TagDescriptionId {
+    #[inline]
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
+
     pub async fn load_all_from_database_for_event(
         connection: &mut SqliteConnection,
         full_event_name_hash: i64,
@@ -57,7 +62,7 @@ impl TagDescriptionId {
 /// `tag_descriptions` table in `EventTrancript.db`.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TagDescription {
-    id: i64,
+    id: TagDescriptionId,
     name: String,
     description: String,
     locale: String,
@@ -65,7 +70,7 @@ pub struct TagDescription {
 
 impl TagDescription {
     #[inline]
-    pub fn new(id: i64, name: String, description: String, locale: String) -> Self {
+    pub fn new(id: TagDescriptionId, name: String, description: String, locale: String) -> Self {
         Self {
             id,
             name,
@@ -89,7 +94,7 @@ impl TagDescription {
 
         for query_result in query_results {
             let parsed_tag = Self {
-                id: require_some!(query_result.tag_id, "tag_id")?,
+                id: TagDescriptionId::new(require_some!(query_result.tag_id, "tag_id")?),
                 name: require_some!(query_result.tag_name, "tag_name")?,
                 locale: require_some!(query_result.locale_name, "locale_name")?,
                 description: require_some!(query_result.description, "description")?,
@@ -101,21 +106,7 @@ impl TagDescription {
         Ok(tag_descriptions)
     }
 
-    pub fn try_from_sqlite_row(row: &SqliteRow) -> Result<Self> {
-        let id: i64 = try_get_row!(row, "tag_id")?;
-        let name: String = try_get_row!(row, "tag_name")?;
-        let description: String = try_get_row!(row, "description")?;
-        let locale: String = try_get_row!(row, "locale_name")?;
-
-        Ok(Self {
-            id,
-            name,
-            description,
-            locale,
-        })
-    }
-
-    pub fn id(&self) -> i64 {
+    pub fn id(&self) -> TagDescriptionId {
         self.id
     }
 

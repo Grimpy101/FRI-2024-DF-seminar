@@ -1,4 +1,4 @@
-use miette::{miette, Context, IntoDiagnostic, Result};
+use miette::{Context, IntoDiagnostic, Result};
 use serde::{Deserialize, Serialize};
 use sqlx::{query, sqlite::SqliteRow, SqliteConnection};
 

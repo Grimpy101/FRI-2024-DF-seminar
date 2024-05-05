@@ -1,7 +1,8 @@
 use std::path::Path;
 
 use argh::FromArgs;
-use miette::Result;
+use detectors::{AllDetectors, EventTranscriptProcessor};
+use miette::{Context, Result};
 use tracing_subscriber::EnvFilter;
 
 use crate::{logging::initialize_tracing, reader::EventTranscriptReader};
@@ -28,14 +29,28 @@ async fn main() -> Result<()> {
         "df-winspy",
     )?;
 
-    let cmd_arguments: CmdArguments = argh::from_env();
+    let cli_arguments: CmdArguments = argh::from_env();
 
 
-    let sqlite_database_path = Path::new(&cmd_arguments.database_path);
-    let mut database = EventTranscriptReader::new(sqlite_database_path).await?;
+    let sqlite_database_path = Path::new(&cli_arguments.database_path);
+    let database = EventTranscriptReader::new(sqlite_database_path)
+        .await
+        .wrap_err("Failed to initialize EventTranscriptReader.")?;
 
-    for event in database.load_all_events().await? {
-        println!("{:?}", event);
+    // for event in database.load_all_events().await? {
+    //     println!("{:?}", event);
+    // }
+
+    let processor = EventTranscriptProcessor::new_from_event_transcript_reader(database)
+        .await
+        .wrap_err("Failed to initialize EventTranscriptProcessor.")?;
+
+    let all_detectors = AllDetectors::new();
+    let processed_events = processor.process_events(all_detectors);
+
+    for processed_event in processed_events {
+        println!("{processed_event:?}");
+        println!();
     }
 
 

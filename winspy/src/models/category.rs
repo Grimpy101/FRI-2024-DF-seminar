@@ -9,6 +9,11 @@ use crate::require_some;
 pub struct CategoryId(i64);
 
 impl CategoryId {
+    #[inline]
+    pub fn new(id: i64) -> Self {
+        Self(id)
+    }
+
     pub async fn load_all_from_database_for_event(
         connection: &mut SqliteConnection,
         full_event_name_hash: i64,
@@ -39,14 +44,14 @@ impl CategoryId {
 
 #[derive(Debug)]
 pub struct Category {
-    id: i64,
+    id: CategoryId,
     name: String,
     producer_id: ProducerId,
 }
 
 impl Category {
     #[inline]
-    pub fn new(id: i64, name: String, producer_id: ProducerId) -> Self {
+    pub fn new(id: CategoryId, name: String, producer_id: ProducerId) -> Self {
         Self {
             id,
             name,
@@ -69,7 +74,10 @@ impl Category {
 
         for query_result in query_results {
             let parsed_category: Category = Self {
-                id: require_some!(query_result.producer_id, "producer_id")?,
+                id: CategoryId::new(require_some!(
+                    query_result.producer_id,
+                    "producer_id"
+                )?),
                 name: require_some!(query_result.category_id_text, "category_id_text")?,
                 producer_id: ProducerId::new(require_some!(
                     query_result.producer_id,
@@ -83,7 +91,7 @@ impl Category {
         Ok(parsed_categories)
     }
 
-    pub fn id(&self) -> i64 {
+    pub fn id(&self) -> CategoryId {
         self.id
     }
 
