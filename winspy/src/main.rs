@@ -2,14 +2,14 @@ use std::path::Path;
 
 use argh::FromArgs;
 use miette::Result;
-use models::EventReader;
 use tracing_subscriber::EnvFilter;
 
-use crate::logging::initialize_tracing;
+use crate::{logging::initialize_tracing, reader::EventTranscriptReader};
 
 mod detectors;
 mod logging;
 mod models;
+mod reader;
 
 #[derive(FromArgs)]
 /// A simple Windows 10/11 event parser and vizualizer
@@ -31,19 +31,13 @@ async fn main() -> Result<()> {
     let cmd_arguments: CmdArguments = argh::from_env();
 
 
-    let database_path = Path::new(&cmd_arguments.database_path);
+    let sqlite_database_path = Path::new(&cmd_arguments.database_path);
+    let mut database = EventTranscriptReader::new(sqlite_database_path).await?;
 
-    let mut database = EventReader::new(database_path).await?;
-    let events = database.load_all_events().await?;
-
-    for event in events.iter() {
+    for event in database.load_all_events().await? {
         println!("{:?}", event);
     }
 
-    println!(
-        "\n-------------------\nRetrieved {} events",
-        events.len()
-    );
 
     drop(guard);
     Ok(())

@@ -1,29 +1,86 @@
-use miette::Result;
-use sqlx::sqlite::SqliteRow;
-use sqlx::Row;
+use miette::{Context, IntoDiagnostic, Result};
+use sqlx::SqliteConnection;
 
-use crate::try_get_row;
+use super::producer::ProducerId;
+use crate::require_some;
+
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+pub struct CategoryId(i64);
+
+impl CategoryId {
+    pub async fn load_all_from_database_for_event(
+        connection: &mut SqliteConnection,
+        full_event_name_hash: i64,
+    ) -> Result<Vec<Self>> {
+        let query_results = sqlx::query!(
+            "SELECT category_id \
+            FROM event_categories as ec \
+            WHERE ec.full_event_name_hash = $1",
+            full_event_name_hash
+        )
+        .fetch_all(connection)
+        .await
+        .into_diagnostic()
+        .wrap_err("Failed to fetch all event categories by event name hash.")?;
+
+        let mut matching_category_ids = Vec::with_capacity(query_results.len());
+
+        for category_result in query_results {
+            let category_id: i64 = require_some!(category_result.category_id, "category_id")?;
+
+            matching_category_ids.push(Self(category_id));
+        }
+
+        Ok(matching_category_ids)
+    }
+}
+
 
 #[derive(Debug)]
 pub struct Category {
     id: i64,
     name: String,
-    producer: String,
+    producer_id: ProducerId,
 }
 
 impl Category {
     #[inline]
-    pub fn new(id: i64, name: String, producer: String) -> Self {
-        Self { id, name, producer }
+    pub fn new(id: i64, name: String, producer_id: ProducerId) -> Self {
+        Self {
+            id,
+            name,
+            producer_id,
+        }
     }
 
-    /// The provided row must be `LEFT JOIN`-ed to the `producers` table on the `producer_id`.
-    pub fn from_sql_row(row: &SqliteRow) -> Result<Self> {
-        let id: i64 = try_get_row!(row, "category_id")?;
-        let name: String = try_get_row!(row, "category_id_text")?;
-        let producer: String = try_get_row!(row, "producer_id_text")?;
+    pub async fn load_all_from_database(connection: &mut SqliteConnection) -> Result<Vec<Self>> {
+        let query_results = sqlx::query!(
+            "SELECT category_id, category_id_text, producer_id \
+            FROM categories"
+        )
+        .fetch_all(connection)
+        .await
+        .into_diagnostic()
+        .wrap_err("Failed to load all categories from database.")?;
 
-        Ok(Self { id, name, producer })
+
+        let mut parsed_categories = Vec::with_capacity(query_results.len());
+
+        for query_result in query_results {
+            let parsed_category: Category = Self {
+                id: require_some!(query_result.producer_id, "producer_id")?,
+                name: require_some!(query_result.category_id_text, "category_id_text")?,
+                producer_id: ProducerId::new(require_some!(
+                    query_result.producer_id,
+                    "producer_id"
+                )?),
+            };
+
+            parsed_categories.push(parsed_category);
+        }
+
+        Ok(parsed_categories)
     }
 
     pub fn id(&self) -> i64 {
@@ -34,7 +91,7 @@ impl Category {
         &self.name
     }
 
-    pub fn producer(&self) -> &str {
-        &self.producer
+    pub fn producer_id(&self) -> ProducerId {
+        self.producer_id
     }
 }
