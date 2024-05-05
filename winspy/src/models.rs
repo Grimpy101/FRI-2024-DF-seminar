@@ -14,6 +14,7 @@ use self::{
 
 pub mod category;
 pub mod error;
+mod macros;
 pub mod persisted_event;
 pub mod producer;
 pub mod tag;
@@ -58,7 +59,7 @@ impl EventDatabase {
         let mut failed_records_count = 0;
 
         for tag_record in tag_records {
-            if let Ok(tag) = Tag::from_sql_row(tag_record) {
+            if let Ok(tag) = Tag::try_from_sqlite_row(tag_record) {
                 tags.push(tag);
             } else {
                 failed_records_count += 1;
@@ -182,7 +183,7 @@ impl EventDatabase {
         let mut failed_records_count = 0;
 
         for tag_record in tag_records {
-            if let Ok(tag) = Tag::from_sql_row(tag_record) {
+            if let Ok(tag) = Tag::try_from_sqlite_row(tag_record) {
                 tags.push(tag);
             } else {
                 failed_records_count += 1;
