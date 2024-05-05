@@ -4,9 +4,10 @@ use miette::Result;
 use miette::{miette, IntoDiagnostic};
 use sqlx::{Connection, SqliteConnection};
 
+use self::error::SavedSqliteRow;
 use self::{
     category::Category,
-    error::EventsError,
+    error::EventReaderError,
     persisted_event::PersistedEvent,
     producer::Producer,
     tag::Tag,
@@ -19,22 +20,24 @@ pub mod persisted_event;
 pub mod producer;
 pub mod tag;
 
-pub struct EventDatabase {
+
+
+pub struct EventReader {
     connection: SqliteConnection,
-    errors: Vec<EventsError>,
+    errors: Vec<EventReaderError>,
 }
 
-impl EventDatabase {
+impl EventReader {
     pub async fn new(database_path: &Path) -> Result<Self> {
         if !database_path.exists() || !database_path.is_file() {
             return Err(miette!(
-                "Provided file does not exist or is not a file"
+                "Provided file does not exist or is not a file."
             ));
         }
 
         let Some(path_str) = database_path.to_str() else {
             return Err(miette!(
-                "While file does exist, its name cannot be converted to proper string"
+                "While file does exist, its name is not valid UTF-8."
             ));
         };
 
@@ -56,21 +59,18 @@ impl EventDatabase {
             .await
             .into_diagnostic()?;
 
-        let mut failed_records_count = 0;
 
         for tag_record in tag_records {
-            if let Ok(tag) = Tag::try_from_sqlite_row(tag_record) {
-                tags.push(tag);
-            } else {
-                failed_records_count += 1;
-            };
-        }
+            let Ok(tag) = Tag::try_from_sqlite_row(&tag_record) else {
+                self.errors.push(EventReaderError::RecordParsingError {
+                    table_name: "tag_descriptions".to_string(),
+                    saved_row: SavedSqliteRow::from_sqlite_row(&tag_record)?,
+                });
 
-        if failed_records_count > 0 {
-            self.errors.push(EventsError::RecordParsingError(
-                "tag_descriptions".to_string(),
-                failed_records_count,
-            ));
+                continue;
+            };
+
+            tags.push(tag);
         }
 
         Ok(tags)
@@ -84,21 +84,17 @@ impl EventDatabase {
             .await
             .into_diagnostic()?;
 
-        let mut failed_records_count = 0;
-
         for producer_record in producer_records {
-            if let Ok(producer) = Producer::from_sql_row(producer_record) {
-                producers.push(producer);
-            } else {
-                failed_records_count += 1;
-            };
-        }
+            let Ok(producer) = Producer::try_from_sqlite_row(&producer_record) else {
+                self.errors.push(EventReaderError::RecordParsingError {
+                    table_name: "producers".to_string(),
+                    saved_row: SavedSqliteRow::from_sqlite_row(&producer_record)?,
+                });
 
-        if failed_records_count > 0 {
-            self.errors.push(EventsError::RecordParsingError(
-                "producers".to_string(),
-                failed_records_count,
-            ));
+                continue;
+            };
+
+            producers.push(producer);
         }
 
         Ok(producers)
@@ -108,28 +104,25 @@ impl EventDatabase {
         let mut categories = Vec::new();
 
         let category_records = sqlx::query(
-            "SELECT * FROM categories
-             LEFT JOIN producers ON categories.producer_id = producers.producer_id",
+            "SELECT * FROM categories \
+            LEFT JOIN producers ON categories.producer_id = producers.producer_id",
         )
         .fetch_all(&mut self.connection)
         .await
         .into_diagnostic()?;
 
-        let mut failed_records_count = 0;
 
         for category_record in category_records {
-            if let Ok(category) = Category::from_sql_row(category_record) {
-                categories.push(category);
-            } else {
-                failed_records_count += 1;
-            };
-        }
+            let Ok(category) = Category::from_sql_row(&category_record) else {
+                self.errors.push(EventReaderError::RecordParsingError {
+                    table_name: "categories+producers".to_string(),
+                    saved_row: SavedSqliteRow::from_sqlite_row(&category_record)?,
+                });
 
-        if failed_records_count > 0 {
-            self.errors.push(EventsError::RecordParsingError(
-                "categories".to_string(),
-                failed_records_count,
-            ));
+                continue;
+            };
+
+            categories.push(category);
         }
 
         Ok(categories)
@@ -139,29 +132,26 @@ impl EventDatabase {
         let mut events = Vec::new();
 
         let event_records = sqlx::query(
-            "SELECT * FROM events_persisted
-             LEFT JOIN provider_groups ON provider_group_id = group_id
-             LEFT JOIN producers ON events_persisted.producer_id = producers.producer_id",
+            "SELECT * FROM events_persisted \
+            LEFT JOIN provider_groups ON provider_group_id = group_id \
+            LEFT JOIN producers ON events_persisted.producer_id = producers.producer_id",
         )
         .fetch_all(&mut self.connection)
         .await
         .into_diagnostic()?;
 
-        let mut failed_records_count = 0;
 
         for event_record in event_records {
-            if let Ok(event) = PersistedEvent::from_sql_row(event_record) {
-                events.push(event);
-            } else {
-                failed_records_count += 1;
-            };
-        }
+            let Ok(event) = PersistedEvent::from_sql_row(&event_record) else {
+                self.errors.push(EventReaderError::RecordParsingError {
+                    table_name: "events_persisted+provider_groups+producers".to_string(),
+                    saved_row: SavedSqliteRow::from_sqlite_row(&event_record)?,
+                });
 
-        if failed_records_count > 0 {
-            self.errors.push(EventsError::RecordParsingError(
-                "events_persisted".to_string(),
-                failed_records_count,
-            ));
+                continue;
+            };
+
+            events.push(event);
         }
 
         Ok(events)
@@ -171,30 +161,27 @@ impl EventDatabase {
         let mut tags = Vec::new();
 
         let tag_records = sqlx::query(
-            "SELECT * FROM event_tags
-             LEFT JOIN tag_descriptions ON event_tags.tag_id = tag_descriptions.tag_id
-             WHERE full_event_name_hash = ?",
+            "SELECT * FROM event_tags \
+            LEFT JOIN tag_descriptions ON event_tags.tag_id = tag_descriptions.tag_id \
+            WHERE full_event_name_hash = ?",
         )
         .bind(event_name_hash)
         .fetch_all(&mut self.connection)
         .await
         .into_diagnostic()?;
 
-        let mut failed_records_count = 0;
 
         for tag_record in tag_records {
-            if let Ok(tag) = Tag::try_from_sqlite_row(tag_record) {
-                tags.push(tag);
-            } else {
-                failed_records_count += 1;
-            }
-        }
+            let Ok(tag) = Tag::try_from_sqlite_row(&tag_record) else {
+                self.errors.push(EventReaderError::RecordParsingError {
+                    table_name: "event_tags+tag_descriptions".to_string(),
+                    saved_row: SavedSqliteRow::from_sqlite_row(&tag_record)?,
+                });
 
-        if failed_records_count > 0 {
-            self.errors.push(EventsError::RecordParsingError(
-                "event_tags".to_string(),
-                failed_records_count,
-            ));
+                continue;
+            };
+
+            tags.push(tag);
         }
 
         Ok(tags)
@@ -207,30 +194,28 @@ impl EventDatabase {
         let mut categories = Vec::new();
 
         let category_records = sqlx::query(
-            "SELECT * FROM event_categories
-             LEFT JOIN categories ON event_categories.category_id = categories.category_id
-             WHERE full_event_name_hash = ?",
+            "SELECT * FROM event_categories \
+            LEFT JOIN categories ON event_categories.category_id = categories.category_id \
+            LEFT JOIN producers ON categories.producer_id = producers.producer_id \
+            WHERE full_event_name_hash = ?",
         )
         .bind(event_name_hash)
         .fetch_all(&mut self.connection)
         .await
         .into_diagnostic()?;
 
-        let mut failed_records_count = 0;
 
         for category_record in category_records {
-            if let Ok(category) = Category::from_sql_row(category_record) {
-                categories.push(category);
-            } else {
-                failed_records_count += 1;
-            }
-        }
+            let Ok(category) = Category::from_sql_row(&category_record) else {
+                self.errors.push(EventReaderError::RecordParsingError {
+                    table_name: "event_categories+categories+producers".to_string(),
+                    saved_row: SavedSqliteRow::from_sqlite_row(&category_record)?,
+                });
 
-        if failed_records_count > 0 {
-            self.errors.push(EventsError::RecordParsingError(
-                "event_categories".to_string(),
-                failed_records_count,
-            ));
+                continue;
+            };
+
+            categories.push(category);
         }
 
         Ok(categories)

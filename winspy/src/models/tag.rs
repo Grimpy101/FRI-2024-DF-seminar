@@ -38,7 +38,7 @@ impl Tag {
         }
     }
 
-    pub fn try_from_sqlite_row(row: SqliteRow) -> Result<Self> {
+    pub fn try_from_sqlite_row(row: &SqliteRow) -> Result<Self> {
         let id: i64 = try_get_row!(row, "tag_id")?;
         let name: String = try_get_row!(row, "tag_name")?;
         let description: String = try_get_row!(row, "description")?;

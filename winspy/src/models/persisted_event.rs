@@ -112,7 +112,7 @@ impl PersistedEvent {
         }
     }
 
-    pub fn from_sql_row(row: SqliteRow) -> Result<Self> {
+    pub fn from_sql_row(row: &SqliteRow) -> Result<Self> {
         let sid: Option<String> = row.try_get("sid").into_diagnostic()?;
         let ldap_timestamp: Option<i64> = row.try_get("timestamp").into_diagnostic()?;
         let payload: Option<String> = row.try_get("payload").into_diagnostic()?;

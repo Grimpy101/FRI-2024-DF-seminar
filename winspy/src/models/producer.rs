@@ -1,29 +1,45 @@
-use miette::{IntoDiagnostic, Result};
+use miette::Result;
 use sqlx::sqlite::SqliteRow;
 use sqlx::Row;
 
+use crate::try_get_row;
+
+/// Describes an event producer (program or executable).
+///
+/// # Example
+/// ```no_run
+/// # use crate::models::Producer;
+/// Tag {
+///     id: 1,
+///     name: "Windows".to_string()
+/// }
+/// ```
+///
+/// # Source
+/// `producers` table in `EventTrancript.db`.
 pub struct Producer {
-    id: Option<i64>,
-    name: Option<String>,
+    id: i64,
+    name: String,
 }
 
 impl Producer {
-    pub fn new(id: Option<i64>, name: Option<String>) -> Self {
+    #[inline]
+    pub fn new(id: i64, name: String) -> Self {
         Self { id, name }
     }
 
-    pub fn from_sql_row(row: SqliteRow) -> Result<Self> {
-        let id: Option<i64> = row.try_get("producer_id").into_diagnostic()?;
-        let name: Option<String> = row.try_get("producer_id_name").into_diagnostic()?;
+    pub fn try_from_sqlite_row(row: &SqliteRow) -> Result<Self> {
+        let id: i64 = try_get_row!(row, "producer_id")?;
+        let name: String = try_get_row!(row, "producer_id_text")?;
 
         Ok(Self { id, name })
     }
 
-    pub fn id(&self) -> Option<i64> {
+    pub fn id(&self) -> i64 {
         self.id
     }
 
-    pub fn name(&self) -> Option<String> {
-        self.name.clone()
+    pub fn name(&self) -> &str {
+        &self.name
     }
 }

@@ -2,7 +2,7 @@ use std::path::Path;
 
 use argh::FromArgs;
 use miette::Result;
-use models::EventDatabase;
+use models::EventReader;
 use tracing_subscriber::EnvFilter;
 
 use crate::logging::initialize_tracing;
@@ -33,7 +33,7 @@ async fn main() -> Result<()> {
 
     let database_path = Path::new(&cmd_arguments.database_path);
 
-    let mut database = EventDatabase::new(database_path).await?;
+    let mut database = EventReader::new(database_path).await?;
     let events = database.load_all_events().await?;
 
     for event in events.iter() {
