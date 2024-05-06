@@ -44,9 +44,9 @@ impl CategoryId {
 
 #[derive(Debug)]
 pub struct Category {
-    id: CategoryId,
-    name: String,
-    producer_id: ProducerId,
+    pub(super) id: CategoryId,
+    pub(super) name: String,
+    pub(super) producer_id: ProducerId,
 }
 
 impl Category {

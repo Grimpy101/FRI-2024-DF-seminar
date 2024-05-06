@@ -22,30 +22,30 @@ pub struct LoggingBinary {
 
 /// Event captured by the database.
 pub struct PersistedEvent {
-    pub device_id: String,
+    pub(super) device_id: String,
 
-    pub timestamp: DateTime<Utc>,
+    pub(super) timestamp: DateTime<Utc>,
 
-    pub payload: PersistedEventPayload,
+    pub(super) payload: PersistedEventPayload,
 
     /// `full_event_name` in the database
-    pub event_name: String,
+    pub(super) event_name: String,
 
-    pub event_name_hash: i64,
+    pub(super) event_name_hash: i64,
 
-    pub is_core: bool,
+    pub(super) is_core: bool,
 
-    pub provider_group: ProviderGroup,
+    pub(super) provider_group: ProviderGroup,
 
     /// Binary that logged the event,
-    pub logging_binary: LoggingBinary,
+    pub(super) logging_binary: LoggingBinary,
 
     // Producer of the event (e.g. Windows, Edge, ...)
-    pub producer_id: ProducerId,
+    pub(super) producer_id: ProducerId,
 
-    pub categories: Vec<CategoryId>,
+    pub(super) categories: Vec<CategoryId>,
 
-    pub tags: Vec<TagDescriptionId>,
+    pub(super) tags: Vec<TagDescriptionId>,
 }
 
 impl Debug for PersistedEvent {
@@ -61,6 +61,35 @@ impl Debug for PersistedEvent {
 }
 
 impl PersistedEvent {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        device_id: String,
+        timestamp: DateTime<Utc>,
+        payload: PersistedEventPayload,
+        event_name: String,
+        event_name_hash: i64,
+        is_core: bool,
+        provider_group: ProviderGroup,
+        logging_binary: LoggingBinary,
+        producer_id: ProducerId,
+        categories: Vec<CategoryId>,
+        tags: Vec<TagDescriptionId>,
+    ) -> Self {
+        Self {
+            device_id,
+            timestamp,
+            payload,
+            event_name,
+            event_name_hash,
+            is_core,
+            provider_group,
+            logging_binary,
+            producer_id,
+            categories,
+            tags,
+        }
+    }
+
     /// Unique SID of the device.
     pub fn device_id(&self) -> &str {
         &self.device_id

@@ -22,10 +22,10 @@ use crate::{require_some, try_get_row};
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct ProviderGroup {
     /// Source: `group_id` field.
-    id: i64,
+    pub(super) id: i64,
 
     /// Source: `group_guid` field.
-    guid: String,
+    pub(super) guid: String,
 }
 
 impl ProviderGroup {

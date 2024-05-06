@@ -29,8 +29,8 @@ impl ProducerId {
 /// # Source
 /// `producers` table in `EventTrancript.db`.
 pub struct Producer {
-    id: ProducerId,
-    name: String,
+    pub(super) id: ProducerId,
+    pub(super) name: String,
 }
 
 impl Producer {

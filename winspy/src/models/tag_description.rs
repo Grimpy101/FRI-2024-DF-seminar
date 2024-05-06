@@ -62,10 +62,10 @@ impl TagDescriptionId {
 /// `tag_descriptions` table in `EventTrancript.db`.
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TagDescription {
-    id: TagDescriptionId,
-    name: String,
-    description: String,
-    locale: String,
+    pub(super) id: TagDescriptionId,
+    pub(super) name: String,
+    pub(super) description: String,
+    pub(super) locale: String,
 }
 
 impl TagDescription {

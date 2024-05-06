@@ -148,23 +148,23 @@ impl EventTranscriptReader {
                 friendly_name: logging_binary_friendly_name,
             };
 
-            let producer = ProducerId::new(producer_id);
+            let producer_id = ProducerId::new(producer_id);
 
 
             // Structure the entire event into a [`PersistedEvent`] for future use.
-            let persisted_event = PersistedEvent {
+            let persisted_event = PersistedEvent::new(
                 device_id,
-                timestamp: event_timestamp,
-                payload: event_payload,
+                event_timestamp,
+                event_payload,
                 event_name,
                 event_name_hash,
                 is_core,
-                provider_group: event_provider_group,
+                event_provider_group,
                 logging_binary,
-                producer_id: producer,
-                categories: category_ids,
-                tags: tag_ids,
-            };
+                producer_id,
+                category_ids,
+                tag_ids,
+            );
 
             persisted_events.push(persisted_event);
         }
