@@ -43,12 +43,14 @@ impl CategoryId {
 
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct Category {
     pub(super) id: CategoryId,
     pub(super) name: String,
     pub(super) producer_id: ProducerId,
 }
 
+#[allow(dead_code)]
 impl Category {
     #[inline]
     pub fn new(id: CategoryId, name: String, producer_id: ProducerId) -> Self {

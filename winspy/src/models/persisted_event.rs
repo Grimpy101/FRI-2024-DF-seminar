@@ -21,6 +21,7 @@ pub struct LoggingBinary {
 
 
 /// Event captured by the database.
+#[allow(dead_code)]
 pub struct PersistedEvent {
     pub(super) device_id: String,
 
@@ -60,6 +61,7 @@ impl Debug for PersistedEvent {
     }
 }
 
+#[allow(dead_code)]
 impl PersistedEvent {
     #[allow(clippy::too_many_arguments)]
     pub fn new(

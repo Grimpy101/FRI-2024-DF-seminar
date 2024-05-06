@@ -53,11 +53,9 @@ impl EventDetector for BatteryEventDetector {
             return None;
         }
 
-        let payload = match event.payload() {
-            PersistedEventPayload::Parsed { payload } => payload,
-            _ => {
-                return None;
-            }
+
+        let PersistedEventPayload::Parsed { payload } = event.payload() else {
+            return None;
         };
 
         let Some(payload) = payload.as_object() else {

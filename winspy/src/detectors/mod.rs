@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 
 use chrono::prelude::{DateTime, Utc};
-use miette::Result;
+use miette::{Context, Result};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use self::battery::{BatteryEvent, BatteryEventDetector};
+use self::{
+    application::{ApplicationEvent, ApplicationEventDetector},
+    battery::{BatteryEvent, BatteryEventDetector},
+};
 use crate::{
     models::{
         category::{Category, CategoryId},
@@ -16,8 +19,11 @@ use crate::{
     reader::EventTranscriptReader,
 };
 
+mod application;
 mod battery;
 mod usb;
+
+
 
 pub struct EventTranscriptProcessor {
     events: Vec<PersistedEvent>,
@@ -26,15 +32,29 @@ pub struct EventTranscriptProcessor {
     categories: HashMap<CategoryId, Category>,
 }
 
-
 impl EventTranscriptProcessor {
     pub async fn new_from_event_transcript_reader(
         mut reader: EventTranscriptReader,
     ) -> Result<Self> {
-        let events = reader.load_all_events().await?;
-        let tags = reader.load_all_tags().await?;
-        let producers = reader.load_all_producers().await?;
-        let categories = reader.load_all_categories().await?;
+        let events = reader
+            .load_all_events()
+            .await
+            .wrap_err("Failed to load all persisted events.")?;
+
+        let tags = reader
+            .load_all_tags()
+            .await
+            .wrap_err("Failed to load all tags.")?;
+
+        let producers = reader
+            .load_all_producers()
+            .await
+            .wrap_err("Failed to load all producers.")?;
+
+        let categories = reader
+            .load_all_categories()
+            .await
+            .wrap_err("Failed to load all categories.")?;
 
 
         let mut tags_map = HashMap::with_capacity(tags.len());
@@ -85,12 +105,14 @@ impl EventTranscriptProcessor {
 
 
 
+#[allow(dead_code)]
 pub struct EventTranscriptReadOnlyView<'a> {
     tags: &'a HashMap<TagDescriptionId, TagDescription>,
     producers: &'a HashMap<ProducerId, Producer>,
     categories: &'a HashMap<CategoryId, Category>,
 }
 
+#[allow(dead_code)]
 impl<'a> EventTranscriptReadOnlyView<'a> {
     pub fn tag_by_id(&self, tag_id: TagDescriptionId) -> Option<&TagDescription> {
         self.tags.get(&tag_id)
@@ -111,6 +133,9 @@ impl<'a> EventTranscriptReadOnlyView<'a> {
 pub enum DetectedEvent {
     #[serde(rename = "battery_event")]
     BatteryEvent(BatteryEvent),
+
+    #[serde(rename = "application_event")]
+    ApplicationEvent(ApplicationEvent),
 }
 
 
@@ -148,12 +173,14 @@ pub trait EventDetector {
 
 pub struct AllDetectors {
     battery: BatteryEventDetector,
+    application: ApplicationEventDetector,
 }
 
 impl AllDetectors {
     pub fn new() -> Self {
         Self {
             battery: BatteryEventDetector::new(),
+            application: ApplicationEventDetector::new(),
         }
     }
 }
@@ -164,8 +191,20 @@ impl EventDetector for AllDetectors {
         event: &PersistedEvent,
         context: &EventTranscriptReadOnlyView,
     ) -> Option<Vec<ProcessedEvent>> {
-        let emitted_battery_events = self.battery.process_event(event, context);
+        let mut aggregated_events = Vec::new();
 
-        emitted_battery_events
+        if let Some(emitted_battery_events) = self.battery.process_event(event, context) {
+            aggregated_events.extend(emitted_battery_events);
+        };
+
+        if let Some(emitted_application_events) = self.application.process_event(event, context) {
+            aggregated_events.extend(emitted_application_events);
+        };
+
+        if !aggregated_events.is_empty() {
+            Some(aggregated_events)
+        } else {
+            None
+        }
     }
 }

@@ -60,7 +60,7 @@ impl EventTranscriptReader {
         let events_query = sqlx::query!(
             "SELECT sid, timestamp, payload, full_event_name, full_event_name_hash, is_core, \
                 provider_group_id, group_guid as provider_group_guid, logging_binary_name, \
-                friendly_logging_binary_name, p.producer_id as producer_id, producer_id_text \
+                friendly_logging_binary_name, p.producer_id as producer_id, producer_id_name \
             FROM events_persisted as e \
             LEFT JOIN provider_groups as g \
                 ON e.provider_group_id = g.group_id \

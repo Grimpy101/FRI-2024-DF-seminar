@@ -28,11 +28,13 @@ impl ProducerId {
 ///
 /// # Source
 /// `producers` table in `EventTrancript.db`.
+#[allow(dead_code)]
 pub struct Producer {
     pub(super) id: ProducerId,
     pub(super) name: String,
 }
 
+#[allow(dead_code)]
 impl Producer {
     #[inline]
     pub fn new(id: ProducerId, name: String) -> Self {
@@ -40,7 +42,7 @@ impl Producer {
     }
 
     pub async fn load_all_from_database(connection: &mut SqliteConnection) -> Result<Vec<Self>> {
-        let query_results = sqlx::query!("SELECT producer_id, producer_id_text FROM producers")
+        let query_results = sqlx::query!("SELECT producer_id, producer_id_name FROM producers")
             .fetch_all(connection)
             .await
             .into_diagnostic()
@@ -52,7 +54,7 @@ impl Producer {
         for query_result in query_results {
             let parsed_producer = Self {
                 id: ProducerId::new(query_result.producer_id),
-                name: require_some!(query_result.producer_id_text, "producer_id_text")?,
+                name: require_some!(query_result.producer_id_name, "producer_id_text")?,
             };
 
             parsed_producers.push(parsed_producer);

@@ -28,6 +28,7 @@ pub struct ProviderGroup {
     pub(super) guid: String,
 }
 
+#[allow(dead_code)]
 impl ProviderGroup {
     #[inline]
     pub fn new(id: i64, guid: String) -> Self {

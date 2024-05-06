@@ -68,8 +68,11 @@ pub struct TagDescription {
     pub(super) locale: String,
 }
 
+
+#[allow(dead_code)]
 impl TagDescription {
     #[inline]
+    #[allow(dead_code)]
     pub fn new(id: TagDescriptionId, name: String, description: String, locale: String) -> Self {
         Self {
             id,

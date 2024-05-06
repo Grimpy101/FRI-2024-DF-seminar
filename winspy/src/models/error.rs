@@ -37,6 +37,7 @@ macro_rules! try_deserialize_some_from_row {
 }
 
 
+#[allow(dead_code)]
 impl SavedSqliteRow {
     pub fn from_sqlite_row(sqlite_row: &SqliteRow) -> Result<Self> {
         let mut saved_columns: Vec<SavedSqliteColumn> = Vec::with_capacity(sqlite_row.len());
@@ -91,6 +92,7 @@ impl SavedSqliteRow {
 
 
 #[derive(Error, Debug)]
+#[allow(dead_code)]
 pub enum EventReaderError {
     #[error("failed to parse record from table {table_name}")]
     RecordParsingError {
