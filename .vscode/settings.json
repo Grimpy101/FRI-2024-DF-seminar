@@ -3,14 +3,14 @@
         {
             "previewLimit": 50,
             "driver": "SQLite",
-            "name": "test-event-transcript",
-            "database": "${workspaceFolder:FRI-2024-DF-seminar}/test_data/VM/Diagnosis/EventTranscript/EventTranscript.db"
+            "name": "test1",
+            "database": "${workspaceFolder:FRI-2024-DF-seminar}/test_data/VM2/EventTranscript(1).db"
         },
         {
             "previewLimit": 50,
             "driver": "SQLite",
-            "name": "test2-df",
-            "database": "${workspaceFolder:FRI-2024-DF-seminar}/test_data/VM2/EventTranscript.db"
+            "name": "test2",
+            "database": "${workspaceFolder:FRI-2024-DF-seminar}/test_data/VM2/EventTranscript (kopija).db"
         }
     ],
     "sqltools.useNodeRuntime": true,
@@ -24,9 +24,6 @@
         "--workspace",
         "--message-format=json",
         "--all-targets",
-    ],
-    "rust-analyzer.rustfmt.extraArgs": [
-        "+nightly"
     ],
     "better-comments.tags": [
         {

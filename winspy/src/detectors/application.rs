@@ -25,7 +25,6 @@ pub struct ApplicationClosedInner {
     seconds_of_audio_played: f64,
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum ApplicationEventType {
     #[serde(rename = "battery_percentage_change")]
@@ -51,7 +50,6 @@ impl From<ApplicationEvent> for DetectedEvent {
     }
 }
 
-
 pub struct ApplicationEventDetector;
 
 impl ApplicationEventDetector {
@@ -64,7 +62,6 @@ const APP_INTERACTIVITY_SUMMARY_EVENT_NAME: &str = "Win32kTraceLogging.AppIntera
 
 /// The number of nanoseconds in a millisecond.
 const NANOS_PER_MILLISECOND: u32 = 1_000_000;
-
 
 impl EventDetector for ApplicationEventDetector {
     fn process_event(
@@ -84,16 +81,13 @@ impl EventDetector for ApplicationEventDetector {
             return None;
         };
 
-
         let Some(event_time) = payload.get("time").and_then(|field| field.as_str()) else {
             return None;
         };
 
-
         let Some(data_table) = payload.get("data").and_then(|field| field.as_object()) else {
             return None;
         };
-
 
         // Extract relevant fields from the `data` table.
 
@@ -120,7 +114,6 @@ impl EventDetector for ApplicationEventDetector {
                     return None;
                 };
 
-
                 (alternative_executable_name.to_string(), None)
             } else {
                 // PANIC SAFETY: We just checked that length is not smaller than 2.
@@ -128,7 +121,6 @@ impl EventDetector for ApplicationEventDetector {
 
                 // PANIC SAFETY: We just checked that length is not smaller than 2.
                 let executable_name = app_id_split.last().unwrap();
-
 
                 (
                     executable_name.to_string(),
@@ -151,7 +143,6 @@ impl EventDetector for ApplicationEventDetector {
                 return None;
             };
 
-
             let since_first_interactivity_seconds_part = since_first_interactivity_ms / 1000;
             let since_first_interactivity_nanoseconds_part = (since_first_interactivity_ms
                 - (since_first_interactivity_seconds_part * 1000))
@@ -169,7 +160,6 @@ impl EventDetector for ApplicationEventDetector {
             else {
                 return None;
             };
-
 
             (opened_at, event_time_utc)
         };
@@ -223,7 +213,6 @@ impl EventDetector for ApplicationEventDetector {
                 return None;
             };
 
-
             let Some(window_height) = data_table
                 .get("WindowHeight")
                 .and_then(|field| field.as_i64())
@@ -234,7 +223,6 @@ impl EventDetector for ApplicationEventDetector {
             let Ok(window_height) = u64::try_from(window_height) else {
                 return None;
             };
-
 
             (window_height, window_width)
         };
@@ -281,13 +269,11 @@ impl EventDetector for ApplicationEventDetector {
                 return None;
             };
 
-
             (
                 (audio_recorded_ms as f64) / 1000f64,
                 (audio_played_ms as f64) / 1000f64,
             )
         };
-
 
         Some(vec![ProcessedEvent::new_with_random_id(
             event.timestamp().to_owned(),

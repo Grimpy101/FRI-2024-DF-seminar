@@ -18,8 +18,6 @@ pub struct LoggingBinary {
     pub friendly_name: String,
 }
 
-
-
 /// Event captured by the database.
 #[allow(dead_code)]
 pub struct PersistedEvent {

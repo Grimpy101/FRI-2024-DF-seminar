@@ -8,6 +8,7 @@ use uuid::Uuid;
 use self::{
     application::{ApplicationEvent, ApplicationEventDetector},
     battery::{BatteryEvent, BatteryEventDetector},
+    edge::EdgeEvent,
 };
 use crate::{
     models::{
@@ -21,9 +22,8 @@ use crate::{
 
 mod application;
 mod battery;
+mod edge;
 mod usb;
-
-
 
 pub struct EventTranscriptProcessor {
     events: Vec<PersistedEvent>,
@@ -56,7 +56,6 @@ impl EventTranscriptProcessor {
             .await
             .wrap_err("Failed to load all categories.")?;
 
-
         let mut tags_map = HashMap::with_capacity(tags.len());
         for tag in tags {
             tags_map.insert(tag.id(), tag);
@@ -71,7 +70,6 @@ impl EventTranscriptProcessor {
         for category in categories {
             categories_map.insert(category.id(), category);
         }
-
 
         Ok(Self {
             events,
@@ -88,7 +86,6 @@ impl EventTranscriptProcessor {
             categories: &self.categories,
         };
 
-
         let mut aggregated_events = Vec::new();
 
         for event in self.events {
@@ -102,8 +99,6 @@ impl EventTranscriptProcessor {
         aggregated_events
     }
 }
-
-
 
 #[allow(dead_code)]
 pub struct EventTranscriptReadOnlyView<'a> {
@@ -127,7 +122,6 @@ impl<'a> EventTranscriptReadOnlyView<'a> {
     }
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "type")]
 pub enum DetectedEvent {
@@ -136,8 +130,10 @@ pub enum DetectedEvent {
 
     #[serde(rename = "application_event")]
     ApplicationEvent(ApplicationEvent),
-}
 
+    #[serde(rename = "edge_event")]
+    EdgeEvent(EdgeEvent),
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ProcessedEvent {
@@ -161,7 +157,6 @@ impl ProcessedEvent {
     }
 }
 
-
 pub trait EventDetector {
     fn process_event(
         &mut self,
@@ -169,7 +164,6 @@ pub trait EventDetector {
         context: &EventTranscriptReadOnlyView,
     ) -> Option<Vec<ProcessedEvent>>;
 }
-
 
 pub struct AllDetectors {
     battery: BatteryEventDetector,

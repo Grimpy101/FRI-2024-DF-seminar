@@ -4,7 +4,6 @@ use sqlx::SqliteConnection;
 use super::producer::ProducerId;
 use crate::require_some;
 
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct CategoryId(i64);
 
@@ -41,7 +40,6 @@ impl CategoryId {
     }
 }
 
-
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct Category {
@@ -70,7 +68,6 @@ impl Category {
         .await
         .into_diagnostic()
         .wrap_err("Failed to load all categories from database.")?;
-
 
         let mut parsed_categories = Vec::with_capacity(query_results.len());
 

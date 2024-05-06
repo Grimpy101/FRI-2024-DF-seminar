@@ -28,7 +28,6 @@ impl TagDescriptionId {
         .into_diagnostic()
         .wrap_err("Failed to fetch all tag IDs for event from database.")?;
 
-
         let mut matching_tag_ids = Vec::with_capacity(query_results.len());
 
         for query_result in query_results {
@@ -40,8 +39,6 @@ impl TagDescriptionId {
         Ok(matching_tag_ids)
     }
 }
-
-
 
 /// An event tag (a category in a sense).
 ///
@@ -68,7 +65,6 @@ pub struct TagDescription {
     pub(super) locale: String,
 }
 
-
 #[allow(dead_code)]
 impl TagDescription {
     #[inline]
@@ -91,7 +87,6 @@ impl TagDescription {
         .await
         .into_diagnostic()
         .wrap_err("Failed to fetch all tag descriptions from database.")?;
-
 
         let mut tag_descriptions = Vec::with_capacity(query_results.len());
 

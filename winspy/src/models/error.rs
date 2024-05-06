@@ -36,7 +36,6 @@ macro_rules! try_deserialize_some_from_row {
     }};
 }
 
-
 #[allow(dead_code)]
 impl SavedSqliteRow {
     pub fn from_sqlite_row(sqlite_row: &SqliteRow) -> Result<Self> {
@@ -89,7 +88,6 @@ impl SavedSqliteRow {
         })
     }
 }
-
 
 #[derive(Error, Debug)]
 #[allow(dead_code)]

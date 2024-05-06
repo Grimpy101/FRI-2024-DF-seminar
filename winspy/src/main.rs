@@ -31,7 +31,6 @@ async fn main() -> Result<()> {
 
     let cli_arguments: CmdArguments = argh::from_env();
 
-
     let sqlite_database_path = Path::new(&cli_arguments.database_path);
     let database = EventTranscriptReader::new(sqlite_database_path)
         .await
@@ -52,7 +51,6 @@ async fn main() -> Result<()> {
         println!("{processed_event:?}");
         println!();
     }
-
 
     drop(guard);
     Ok(())

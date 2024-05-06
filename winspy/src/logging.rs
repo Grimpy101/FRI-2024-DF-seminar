@@ -5,12 +5,8 @@ use std::path::Path;
 use miette::Result;
 use tracing_appender::non_blocking::WorkerGuard;
 use tracing_subscriber::{
-    prelude::__tracing_subscriber_SubscriberExt,
-    util::SubscriberInitExt,
-    EnvFilter,
-    Layer,
+    prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer,
 };
-
 
 /// Initialize console and file logging via [`tracing`](../../tracing/index.html).
 ///
@@ -80,7 +76,6 @@ where
         .with(console_layer)
         .with(file_layer)
         .init();
-
 
     Ok(file_guard)
 }

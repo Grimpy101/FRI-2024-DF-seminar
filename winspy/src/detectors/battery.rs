@@ -29,8 +29,6 @@ impl From<BatteryEvent> for DetectedEvent {
     }
 }
 
-
-
 pub struct BatteryEventDetector {}
 
 impl BatteryEventDetector {
@@ -38,7 +36,6 @@ impl BatteryEventDetector {
         Self {}
     }
 }
-
 
 const BATTERY_CHANGE_EVENT_NAME: &str =
     "Microsoft.Windows.Kernel.Power.BatteryChargePercentageChange";
@@ -52,7 +49,6 @@ impl EventDetector for BatteryEventDetector {
         if event.event_name().ne(BATTERY_CHANGE_EVENT_NAME) {
             return None;
         }
-
 
         let PersistedEventPayload::Parsed { payload } = event.payload() else {
             return None;
@@ -76,7 +72,6 @@ impl EventDetector for BatteryEventDetector {
         let Ok(battery_percentage) = u8::try_from(remaining_percentage) else {
             return None;
         };
-
 
         Some(vec![ProcessedEvent::new_with_random_id(
             event.timestamp().to_owned(),

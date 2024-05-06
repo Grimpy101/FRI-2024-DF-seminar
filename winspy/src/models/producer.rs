@@ -5,7 +5,6 @@ use sqlx::SqliteConnection;
 
 use crate::require_some;
 
-
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub struct ProducerId(i64);
 
@@ -16,13 +15,11 @@ impl ProducerId {
     }
 }
 
-
 #[derive(sqlx::FromRow, Debug, PartialEq, Eq)]
 struct ProducersTableRecord {
     pub producer_id: i64,
-    pub producer_id_name: Option<String>
+    pub producer_id_name: Option<String>,
 }
-
 
 /// Describes an event producer (program or executable).
 ///
@@ -51,18 +48,21 @@ impl Producer {
     }
 
     pub async fn load_all_from_database(connection: &mut SqliteConnection) -> Result<Vec<Self>> {
-        let mut query_results: Result<Vec<ProducersTableRecord>> = sqlx::query_as("SELECT producer_id, producer_id_name FROM producers")
-            .fetch_all(connection.borrow_mut())
-            .await
-            .into_diagnostic()
-            .wrap_err("Failed to load all producers from database.");
-
-        if query_results.is_err() {
-            query_results = sqlx::query_as("SELECT producer_id, producer_id_text as producer_id_name FROM producers")
-                .fetch_all(connection)
+        let mut query_results: Result<Vec<ProducersTableRecord>> =
+            sqlx::query_as("SELECT producer_id, producer_id_name FROM producers")
+                .fetch_all(connection.borrow_mut())
                 .await
                 .into_diagnostic()
-                .wrap_err("Failed to load all producers from database.")
+                .wrap_err("Failed to load all producers from database.");
+
+        if query_results.is_err() {
+            query_results = sqlx::query_as(
+                "SELECT producer_id, producer_id_text as producer_id_name FROM producers",
+            )
+            .fetch_all(connection)
+            .await
+            .into_diagnostic()
+            .wrap_err("Failed to load all producers from database.")
         }
 
         let query_results = query_results?;

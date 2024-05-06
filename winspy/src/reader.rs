@@ -28,7 +28,7 @@ struct EventTranscriptTableRecord {
     logging_binary_name: Option<String>,
     friendly_logging_binary_name: Option<String>,
     producer_id: i64,
-    producer_id_name: Option<String>
+    producer_id_name: Option<String>,
 }
 
 pub struct EventTranscriptReader {
@@ -71,7 +71,6 @@ impl EventTranscriptReader {
 
     pub async fn load_all_events(&mut self) -> Result<Vec<PersistedEvent>> {
         let mut persisted_events = Vec::new();
-
 
         let mut events_query: Result<Vec<EventTranscriptTableRecord>> = sqlx::query_as(
             "SELECT sid, timestamp, payload, full_event_name, full_event_name_hash, is_core, \
@@ -128,7 +127,6 @@ impl EventTranscriptReader {
             )?;
             let producer_id: i64 = row.producer_id;
 
-
             // Parse a LDAP timestamp into a UTC one.
             let event_timestamp = {
                 let ldap_starting_offset = Utc
@@ -145,7 +143,6 @@ impl EventTranscriptReader {
                     .ok_or_else(|| miette!("Failed to construct UTC evnt timestamp."))?
             };
 
-
             // Load all related categories (but only their IDs).
             let category_ids =
                 CategoryId::load_all_from_database_for_event(&mut self.connection, event_name_hash)
@@ -157,7 +154,6 @@ impl EventTranscriptReader {
                 event_name_hash,
             )
             .await?;
-
 
             // Parse the event payload, if any, as JSON.
             let event_payload = if let Some(payload) = raw_payload {
@@ -173,7 +169,6 @@ impl EventTranscriptReader {
                 PersistedEventPayload::None
             };
 
-
             // Parse event provider, logging binary and producer ID.
             let event_provider_group = ProviderGroup::new(provider_group_id, provider_group_guid);
 
@@ -183,7 +178,6 @@ impl EventTranscriptReader {
             };
 
             let producer_id = ProducerId::new(producer_id);
-
 
             // Structure the entire event into a [`PersistedEvent`] for future use.
             let persisted_event = PersistedEvent::new(
@@ -202,7 +196,6 @@ impl EventTranscriptReader {
 
             persisted_events.push(persisted_event);
         }
-
 
         Ok(persisted_events)
     }
