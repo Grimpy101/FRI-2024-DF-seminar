@@ -1,3 +1,5 @@
+use std::borrow::BorrowMut;
+
 use miette::{Context, IntoDiagnostic, Result};
 use sqlx::SqliteConnection;
 
@@ -12,6 +14,13 @@ impl ProducerId {
     pub fn new(id: i64) -> Self {
         Self(id)
     }
+}
+
+
+#[derive(sqlx::FromRow, Debug, PartialEq, Eq)]
+struct ProducersTableRecord {
+    pub producer_id: i64,
+    pub producer_id_name: Option<String>
 }
 
 
@@ -42,12 +51,21 @@ impl Producer {
     }
 
     pub async fn load_all_from_database(connection: &mut SqliteConnection) -> Result<Vec<Self>> {
-        let query_results = sqlx::query!("SELECT producer_id, producer_id_name FROM producers")
-            .fetch_all(connection)
+        let mut query_results: Result<Vec<ProducersTableRecord>> = sqlx::query_as("SELECT producer_id, producer_id_name FROM producers")
+            .fetch_all(connection.borrow_mut())
             .await
             .into_diagnostic()
-            .wrap_err("Failed to load all producers from database.")?;
+            .wrap_err("Failed to load all producers from database.");
 
+        if query_results.is_err() {
+            query_results = sqlx::query_as("SELECT producer_id, producer_id_text as producer_id_name FROM producers")
+                .fetch_all(connection)
+                .await
+                .into_diagnostic()
+                .wrap_err("Failed to load all producers from database.")
+        }
+
+        let query_results = query_results?;
 
         let mut parsed_producers = Vec::with_capacity(query_results.len());
 

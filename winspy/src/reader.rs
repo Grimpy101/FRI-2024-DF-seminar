@@ -15,6 +15,22 @@ use crate::{
     require_some,
 };
 
+#[derive(sqlx::FromRow, Debug, PartialEq, Eq)]
+struct EventTranscriptTableRecord {
+    sid: Option<String>,
+    timestamp: Option<i64>,
+    payload: Option<String>,
+    full_event_name: Option<String>,
+    full_event_name_hash: Option<i64>,
+    is_core: Option<i64>,
+    provider_group_id: Option<i64>,
+    provider_group_guid: Option<String>,
+    logging_binary_name: Option<String>,
+    friendly_logging_binary_name: Option<String>,
+    producer_id: i64,
+    producer_id_name: Option<String>
+}
+
 pub struct EventTranscriptReader {
     connection: SqliteConnection,
 }
@@ -57,7 +73,7 @@ impl EventTranscriptReader {
         let mut persisted_events = Vec::new();
 
 
-        let events_query = sqlx::query!(
+        let mut events_query: Result<Vec<EventTranscriptTableRecord>> = sqlx::query_as(
             "SELECT sid, timestamp, payload, full_event_name, full_event_name_hash, is_core, \
                 provider_group_id, group_guid as provider_group_guid, logging_binary_name, \
                 friendly_logging_binary_name, p.producer_id as producer_id, producer_id_name \
@@ -69,7 +85,25 @@ impl EventTranscriptReader {
         )
         .fetch_all(&mut self.connection)
         .await
-        .into_diagnostic()?;
+        .into_diagnostic();
+
+        if events_query.is_err() {
+            events_query = sqlx::query_as(
+                "SELECT sid, timestamp, payload, full_event_name, full_event_name_hash, is_core, \
+                    provider_group_id, group_guid as provider_group_guid, logging_binary_name, \
+                    friendly_logging_binary_name, p.producer_id as producer_id, producer_id_text as producer_id_name \
+                FROM events_persisted as e \
+                LEFT JOIN provider_groups as g \
+                    ON e.provider_group_id = g.group_id \
+                LEFT JOIN producers as p \
+                    ON e.producer_id = p.producer_id",
+            )
+            .fetch_all(&mut self.connection)
+            .await
+            .into_diagnostic();
+        }
+
+        let events_query = events_query?;
 
         for row in events_query {
             // Unpack columns and ensure that most of them are `Some`.
