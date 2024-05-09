@@ -1,0 +1,63 @@
+body {
+    margin: 0;
+    padding: 10px;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+h1 {
+    text-align: center;
+}
+
+.filters {
+    display: flex;
+    align-items: center;
+}
+
+.filters > * {
+    margin: 10px;
+}
+
+.content {
+    width: 1000px;
+    margin: 0 auto;
+}
+
+.dropArea {
+    width: 100%;
+    height: 100%;
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.timestamp {
+    font-style: italic;
+    color: grey;
+    margin-right: 10px;
+}
+
+p {
+    margin: 0;
+}
+
+.list * {
+    margin: 0;
+}
+
+.listItem:nth-child(even) {
+    background-color: antiquewhite;
+}
+
+.listItem {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.itemHeader {
+    display: flex;
+}
+
+.detailKeyValue {
+    display: flex;
+}
