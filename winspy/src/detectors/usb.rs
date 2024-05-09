@@ -59,7 +59,7 @@ impl USBAddedEvent {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum USBEvent {
-    #[serde(rename = "added")]
+    #[serde(rename = "content")]
     Added(USBAddedEvent),
 }
 
