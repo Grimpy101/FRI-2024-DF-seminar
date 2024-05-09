@@ -1,8 +1,9 @@
-use std::path::Path;
+use std::{fs, path::Path};
 
 use argh::FromArgs;
 use detectors::{AllDetectors, EventTranscriptProcessor};
-use miette::{Context, Result};
+use miette::{Context, IntoDiagnostic, Result};
+use tracing::warn;
 use tracing_subscriber::EnvFilter;
 
 use crate::{logging::initialize_tracing, reader::EventTranscriptReader};
@@ -18,6 +19,9 @@ pub struct CmdArguments {
     /// path to the EventTrancript.db
     #[argh(option, short = 'i')]
     pub database_path: String,
+    /// path to the output JSON file
+    #[argh(option, short = 'o')]
+    pub output_file: String,
 }
 
 #[tokio::main]
@@ -47,10 +51,13 @@ async fn main() -> Result<()> {
     let all_detectors = AllDetectors::new();
     let processed_events = processor.process_events(all_detectors);
 
-    for processed_event in processed_events {
+    for processed_event in processed_events.iter() {
         println!("{processed_event:?}");
         println!();
     }
+
+    let output_content = serde_json::to_string(&processed_events).into_diagnostic()?;
+    fs::write(cli_arguments.output_file, output_content).into_diagnostic()?;
 
     drop(guard);
     Ok(())

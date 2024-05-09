@@ -1,6 +1,10 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use crate::models::persisted_event::PersistedEvent;
+
+use super::EventDetector;
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct TabEvent {
     opened_at: Option<DateTime<Utc>>,
@@ -42,4 +46,8 @@ pub enum EdgeEvent {
     EdgeInstance(EdgeInstance),
     DefaultSearchEngine(EdgeDefaultSearchEngine),
     HomePage(EdgeHomePage),
+}
+
+pub struct EdgeEventDetector {
+    instances: Vec<EdgeInstance>,
 }

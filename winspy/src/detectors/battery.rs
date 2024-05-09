@@ -11,14 +11,14 @@ pub enum BatteryEventType {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BatteryEvent {
-    pub r#type: BatteryEventType,
+    pub content: BatteryEventType,
 }
 
 impl BatteryEvent {
     #[inline]
     pub fn battery_percentage_change(battery_percentage: u8) -> Self {
         Self {
-            r#type: BatteryEventType::BatteryPercentageChange { battery_percentage },
+            content: BatteryEventType::BatteryPercentageChange { battery_percentage },
         }
     }
 }

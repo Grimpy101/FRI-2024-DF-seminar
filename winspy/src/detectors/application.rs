@@ -33,13 +33,13 @@ pub enum ApplicationEventType {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ApplicationEvent {
-    pub r#type: ApplicationEventType,
+    pub content: ApplicationEventType,
 }
 
 impl ApplicationEvent {
     pub fn application_closed(info: ApplicationClosedInner) -> Self {
         Self {
-            r#type: ApplicationEventType::ApplicationClosed(info),
+            content: ApplicationEventType::ApplicationClosed(info),
         }
     }
 }

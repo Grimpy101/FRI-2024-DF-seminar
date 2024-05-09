@@ -9,6 +9,7 @@ use self::{
     application::{ApplicationEvent, ApplicationEventDetector},
     battery::{BatteryEvent, BatteryEventDetector},
     edge::EdgeEvent,
+    usb::{USBEvent, USBEventDetector},
 };
 use crate::{
     models::{
@@ -133,6 +134,9 @@ pub enum DetectedEvent {
 
     #[serde(rename = "edge_event")]
     EdgeEvent(EdgeEvent),
+
+    #[serde(rename = "usb_event")]
+    UsbEvent(USBEvent),
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -168,6 +172,7 @@ pub trait EventDetector {
 pub struct AllDetectors {
     battery: BatteryEventDetector,
     application: ApplicationEventDetector,
+    usb: USBEventDetector,
 }
 
 impl AllDetectors {
@@ -175,6 +180,7 @@ impl AllDetectors {
         Self {
             battery: BatteryEventDetector::new(),
             application: ApplicationEventDetector::new(),
+            usb: USBEventDetector::new(),
         }
     }
 }
@@ -193,6 +199,10 @@ impl EventDetector for AllDetectors {
 
         if let Some(emitted_application_events) = self.application.process_event(event, context) {
             aggregated_events.extend(emitted_application_events);
+        };
+
+        if let Some(emitted_usb_events) = self.usb.process_event(event, context) {
+            aggregated_events.extend(emitted_usb_events);
         };
 
         if !aggregated_events.is_empty() {
