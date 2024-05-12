@@ -27,7 +27,7 @@ pub struct ApplicationClosedInner {
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum ApplicationEventType {
-    #[serde(rename = "battery_percentage_change")]
+    #[serde(rename = "application_closed")]
     ApplicationClosed(ApplicationClosedInner),
 }
 
